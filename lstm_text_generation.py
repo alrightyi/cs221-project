@@ -60,7 +60,7 @@ model.add(Dense(len(chars), activation='softmax'))
 
 optimizer = RMSprop(lr=0.01)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-
+print(model.summary())
 
 def sample(preds, temperature=1.0):
     # helper function to sample an index from a probability array
@@ -102,11 +102,11 @@ def on_epoch_end(epoch, _):
             sys.stdout.flush()
         print()
 
-print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
+#print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
 
-model.fit(x, y,
-          batch_size=128,
-          epochs=10,
-          callbacks=[print_callback])
+#model.fit(x, y,
+#          batch_size=128,
+#          epochs=10,
+#          callbacks=[print_callback])
 
-model.save('ebert_10.h5')
+#model.save('ebert_10.h5')

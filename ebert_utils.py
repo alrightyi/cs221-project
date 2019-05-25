@@ -115,35 +115,45 @@ def on_epoch_end(epoch, logs):
     print()
  """   
 print("Loading text data...")
-text = io.open('shakespeare.txt', encoding='utf-8').read().lower()
+text = io.open('roger_ebert_200.txt', encoding='utf-8').read().lower()
 #print('corpus length:', len(text))
 
-Tx = 40
+Tx = 200
+stride = 6
 chars = sorted(list(set(text)))
 char_indices = dict((c, i) for i, c in enumerate(chars))
 indices_char = dict((i, c) for i, c in enumerate(chars))
 #print('number of unique characters in the corpus:', len(chars))
 
 print("Creating training set...")
-X, Y = build_data(text, Tx, stride = 3)
+X, Y = build_data(text, Tx, stride = stride)
 print("Vectorizing training set...")
-x, y = vectorization(X, Y, n_x = len(chars), char_indices = char_indices) 
+x, y = vectorization(X, Y, n_x = len(chars), char_indices = char_indices, Tx = Tx) 
 print("Loading model...")
-model = load_model('models/model_shakespeare_kiank_350_epoch.h5')
+model = load_model('ebert_100.h5')
+#print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
+
+#for i in range(10):
+#    model.fit(x, y,
+#        batch_size=128,
+#        epochs=10,
+#        callbacks=[print_callback])
+
+#model.save('ebert_20.h5')
 
 
 def generate_output():
     generated = ''
     #sentence = text[start_index: start_index + Tx]
     #sentence = '0'*Tx
-    usr_input = input("Write the beginning of your poem, the Shakespeare machine will complete it. Your input is: ")
+    usr_input = input("Write the beginning of your review, the REview machine will complete it. Your input is: ")
     # zero pad the sentence to Tx characters.
     sentence = ('{0:0>' + str(Tx) + '}').format(usr_input).lower()
     generated += usr_input 
 
-    sys.stdout.write("\n\nHere is your poem: \n\n") 
+    sys.stdout.write("\n\nHere is your review: \n\n") 
     sys.stdout.write(usr_input)
-    for i in range(400):
+    for i in range(200):
 
         x_pred = np.zeros((1, Tx, len(chars)))
 
