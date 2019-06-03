@@ -52,14 +52,18 @@ class Review:
         txt = ''
         alt = 0
         for detail in self.details:
-            txt += re.sub('\'|\\|\/|\(|\)|\[|\]|\{|\}', '', detail)+('\n' if alt % 2 == 1 else ' ')
+            detail = detail.lower()
+            detail = re.sub('[^a-zA-z0-9\s]', '', detail)
+            txt += detail+('\n' if alt % 2 == 1 else ' ')
             alt += 1
         #for more_detail in self.more_details:
         #    txt += re.sub('\'|\\|\/|\(|\)|\[|\]|\{|\}', '', more_detail)+'\n'
-        for body in self.body:
+        for body in self.body[-6:-1]:
             if body == '\'Advertisement\'' or 'googletag.cmd.push' in body:
                 continue
-            txt += re.sub('\'|\\|\/|\(|\)|\[|\]|\{|\}', '', body)+'\n'
+            body = body.lower()
+            body = re.sub('[^a-zA-z0-9\s]', '', body)
+            txt += body+' '
         txt += '\n'
         return txt
 
@@ -69,10 +73,12 @@ def loadReviews():
     f.close()
     
     keys = list(reviews.keys())
-    length = 200
+    length = 2000
     random.Random(4).shuffle(keys)
-    txt = open('roger_ebert_200.txt', 'w+')
+    txt = open('ebert_last5_2000.txt', 'w+')
     for key in keys[0:length]:
+        if len(reviews[key].body) > 100:
+            continue
         txt.write(repr(reviews[key]))
     txt.close()
     
@@ -205,5 +211,5 @@ def getSummaries(argv):
 
 if __name__ == '__main__':
     #getSummaries(sys.argv)
-    #loadReviews()
-    reviewStats()
+    loadReviews()
+    #reviewStats()
