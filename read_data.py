@@ -1,7 +1,14 @@
-"""TODO(hoivan): DO NOT SUBMIT without one-line documentation for read_data.
-read and preprocess review data from roger ebert
-TODO(hoivan): DO NOT SUBMIT without a detailed description of read_data.
-"""
+'''
+Read and preprocess text data from roger ebert
+Method:
+1) Filter list of movie reviews authored by Roger Ebert from 
+https://www.rogerebert.com/reviews. Parse the ist using lxml and BeautifulSoup
+2) For each movie review listing, get the movie metadata, actual rating and review 
+text from https://www.rogerebert.com/reviews
+3) Store the data in class Review and store locally using Pickle
+4) Separate method to generate stats such as how many movie reviews in total, 
+avg rating, max word length.
+'''
 from bs4 import  BeautifulSoup
 import lxml
 import requests

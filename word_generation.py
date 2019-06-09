@@ -1,15 +1,28 @@
+'''
+Main python script for training word generation model using Ebert's reviews as training data.
+Steps:
+1) Read txt file containing movie meta data, rating, and last X paragraphs of Ebert's review.
+2) Deduce word dictionary generate bi-gram.  Word as input, next word 
+(including line break) as output.
+3) Split data into training, validation, and test sets
+4) Create LSTM RNN model, compile
+5) Run training for N epochs
+6) Evaluate using test data
+'''
+
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 
 from sklearn.feature_extraction.text import CountVectorizer
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.callbacks import ModelCheckpoint, LambdaCallback, EarlyStopping
 from keras.layers import Dense, Embedding, LSTM, SpatialDropout1D, Bidirectional, Dropout, Activation
 from sklearn.model_selection import train_test_split
 from keras.utils.np_utils import to_categorical
 from read_data import Review
+import matplotlib.pyplot as plt
 import re
 import io
 import os
@@ -17,15 +30,19 @@ import codecs
 import pickle
 import random
 
-MIN_WORD_FREQUENCY = 10
-SEQUENCE_LEN = 10
-STEP = 2
+MIN_WORD_FREQUENCY = 5
+SEQUENCE_LEN = 140
+STEP = 10
 DROPOUT = 0.5
 BATCH_SIZE = 32
-EPOCHS = 1000
-CORPUS = "ebert_last5_2000.txt"
-RESULT = "result.txt"
+SPLIT=0.2
+EPOCHS = 20
+#CORPUS = "ebert_last5_2000.txt"
+CORPUS = "roger_ebert_last5.txt"
+RESULT = "result_5_epoch10.txt"
 VOCABULARY = "vocab.txt"
+MODEL = None
+#MODEL = "checkpoints/LSTM-epoch001-words18707-sequence100-minfreq5-loss7.6702-acc0.0484-val_loss7.3704-val_acc0.0471"
 
 
 
@@ -98,21 +115,36 @@ def on_epoch_end(epoch, logs):
     # Function invoked at end of each epoch. Prints generated text.
     examples_file.write('\n----- Generating text after Epoch: %d\n' % epoch)
 
-    # Randomly pick a seed sequence
-    seed_index = np.random.randint(len(sentences+sentences_test))
-    seed = (sentences+sentences_test)[seed_index]
+    # Randomly pick a seed sequence (of movie metadata)
+    #seed_index = np.random.randint(len(sentences+sentences_test))
+    #seed = (sentences+sentences_test)[seed_index]
+    review = reviews[shuffled_keys[0]]
+    txt = ''
+    alt = 0
+    for detail in review.details:
+        detail = detail.lower()
+        detail = re.sub('[^a-zA-z0-9\s]', '', detail)
+        txt += detail+('\n' if alt % 2 == 1 else ' ')
+        alt += 1
+        
+    seed = txt.replace('\n', ' \n ')
+    #print(seed)
+    text_in_words = [w for w in seed.split(' ') if w.strip() != '' or w == '\n']
+    #print(text_in_words)
+    print("seed length: ", len(text_in_words))
 
     #for diversity in [0.3, 0.4, 0.5, 0.6, 0.7]:
     for diversity in [0.5, 1.0]:
-        sentence = seed
+        sentence = text_in_words
         examples_file.write('----- Diversity:' + str(diversity) + '\n')
         examples_file.write('----- Generating with seed:\n"' + ' '.join(sentence) + '"\n')
         examples_file.write(' '.join(sentence))
 
-        for i in range(50):
+        for i in range(SEQUENCE_LEN-len(sentence)):
             x_pred = np.zeros((1, SEQUENCE_LEN, len(words)))
             for t, word in enumerate(sentence):
-                x_pred[0, t, word_indices[word]] = 1.
+                if word in word_indices.keys():
+                    x_pred[0, t, word_indices[word]] = 1.
 
             preds = model.predict(x_pred, verbose=0)[0]
             next_index = sample(preds, diversity)
@@ -152,6 +184,8 @@ if __name__ == "__main__":
     for k, v in word_freq.items():
         if word_freq[k] < MIN_WORD_FREQUENCY:
             ignored_words.add(k)
+            
+    print("Ignored words: ", list(ignored_words)[0:100])
 
     words = set(text_in_words)
     print('Unique words before ignoring:', len(words))
@@ -179,34 +213,43 @@ if __name__ == "__main__":
 
     # x, y, x_test, y_test
     (sentences, next_words), (sentences_test, next_words_test) = shuffle_and_split_training_set(
-        sentences, next_words, percentage_test=20
+        sentences, next_words, percentage_test=SPLIT*100
     )
-
-    model = get_model(DROPOUT)
-    model.compile(loss='categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
-    model.summary()
-
+    
+    examples_file = open(examples, "w")
+    f = open('keys.pckl', 'rb')
+    shuffled_keys = pickle.load(f)
+    f.close()
+    
+    f = open('store.pckl', 'rb')
+    reviews = pickle.load(f)
+    f.close()
+    
     file_path = "./checkpoints/LSTM-epoch{epoch:03d}-words%d-sequence%d-minfreq%d-" \
                 "loss{loss:.4f}-acc{acc:.4f}-val_loss{val_loss:.4f}-val_acc{val_acc:.4f}" % \
                 (len(words), SEQUENCE_LEN, MIN_WORD_FREQUENCY)
 
     checkpoint = ModelCheckpoint(file_path, monitor='val_acc', save_best_only=True, period=10)
-    #print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
+    print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
     early_stopping = EarlyStopping(monitor='val_acc', patience=10)
-    callbacks_list = [checkpoint, early_stopping]
+    callbacks_list = [checkpoint, print_callback, early_stopping]
 
-    examples_file = open(examples, "w")
-    model.fit_generator(generator(sentences, next_words, BATCH_SIZE),
-                        steps_per_epoch=int(len(sentences)/BATCH_SIZE) + 1,
-                        epochs=EPOCHS,
-                        callbacks=callbacks_list,
-                        validation_data=generator(sentences_test, next_words_test, BATCH_SIZE),
-                        validation_steps=int(len(sentences_test)/BATCH_SIZE) + 1,
-                        verbose=2)
-    
-    #f = open('store.pckl', 'rb')
-    #reviews = pickle.load(f)
-    #f.close()
+    if MODEL == None:
+        model = get_model(DROPOUT)
+        model.compile(loss='categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
+        model.summary()
+        history = model.fit_generator(generator(sentences, next_words, BATCH_SIZE),
+                                      steps_per_epoch=int(len(sentences)/BATCH_SIZE) + 1,
+                                      epochs=EPOCHS,
+                                      callbacks=callbacks_list,
+                                      validation_data=generator(sentences_test, next_words_test, BATCH_SIZE),
+                                      validation_steps=int(len(sentences_test)/BATCH_SIZE) + 1)
+        
+    else:
+        model = load_model(MODEL)
+        model.summary()
+        
+    on_epoch_end(10, None)
     
     #keys = list(reviews.keys())
     #length = 2000
@@ -214,3 +257,24 @@ if __name__ == "__main__":
     #f = open('keys.pckl', 'wb')
     #pickle.dump(keys, f)
     #f.close()
+
+    # summarize history for accuracy
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
+    plt.title('accuracy dropout:%.2f min_word:%i seq_len:%i step:%i split:%.2f' 
+              % (DROPOUT,MIN_WORD_FREQUENCY,SEQUENCE_LEN,STEP,SPLIT))
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('WG_acc_d%.0fm%is%ist%is%.0f' 
+              % (DROPOUT*10,MIN_WORD_FREQUENCY,SEQUENCE_LEN,STEP,SPLIT*10))
+    # summarize history for loss
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('loss dropout:%.2f min_word:%i seq_len:%i step:%i split:%.2f' 
+              % (DROPOUT,MIN_WORD_FREQUENCY,SEQUENCE_LEN,STEP,SPLIT))
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('WG_loss_d%.0fm%is%ist%is%.0f' 
+              % (DROPOUT*10,MIN_WORD_FREQUENCY,SEQUENCE_LEN,STEP,SPLIT*10))

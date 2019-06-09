@@ -1,5 +1,5 @@
 '''
-#Example script to generate text from Nietzsche's writings.
+#Example script to generate text from Roger Ebert's writings.
 
 At least 20 epochs are required before the generated text
 starts sounding coherent.
