@@ -37,6 +37,7 @@ DROPOUT = 0.6
 BATCH_SIZE = 32
 SPLIT=0.2
 EPOCHS = 50
+PATIENCE = 20
 #CORPUS = "ebert_last5_2000.txt"
 CORPUS = "roger_ebert_last5.txt"
 RESULT = "result_5_epoch10.txt"
@@ -231,7 +232,7 @@ if __name__ == "__main__":
 
     checkpoint = ModelCheckpoint(file_path, monitor='val_acc', save_best_only=True, period=10)
     print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
-    early_stopping = EarlyStopping(monitor='val_acc', patience=20)
+    early_stopping = EarlyStopping(monitor='val_acc', patience=PATIENCE)
     callbacks_list = [checkpoint, print_callback, early_stopping]
 
     if MODEL == None:
