@@ -29,19 +29,21 @@ import os
 import io
 import pandas as pd
 
-
+EMBED_DIM = 64
+MAX_FEATURES = 2000
+LSTM_OUT = 96
 DROPOUT = 0.5
 BATCH_SIZE = 32
-EPOCHS = 100
-MAX_FEATURES = 1000
+EPOCHS = 50
 SPLIT = 0.2
 CORPUS = "ebert_last5_2000.txt"
 RESULT = "result.txt"
 VOCABULARY = "vocab.txt"
 MODEL = None
+#MODEL = "checkpoints/Sentimentepoch040-loss0.4812-acc0.7683-val_loss0.7965-val_acc0.6151"
+KEY = "/reviews/the-crimson-rivers-2001"
 
-EMBED_DIM = 32
-LSTM_OUT = 48
+
 
 def loadReviews():
     f = open('store.pckl', 'rb')
@@ -105,6 +107,27 @@ if __name__ == "__main__":
     else:
         model = load_model(MODEL)
         model.summary()
+        
+    if KEY != None:
+        # Test example data:
+        text = [repr(reviews[KEY]).lower().replace('\n', ' \n ')]
+        print(KEY)
+        txt = tokenizer.texts_to_sequences(text)
+        txt = pad_sequences(txt, maxlen=X.shape[1], dtype='int32', value=0)
+        sentiment = model.predict(txt,batch_size=1)
+        print(sentiment)
+        print("Predicted with Ebert:  ", "thumbs-up" if np.argmax(sentiment[0]) >= 1 else "thumbs-down")
+        print("Ebert Actual:  ", "thumbs-up " if reviews[KEY].rr/3 >= 1 else "thumbs-down ", reviews[KEY].rr)
+
+        test_example = "integrated_example.txt"
+        with io.open(test_example, encoding='utf-8') as f:
+            text = [f.read().lower().replace('\n', ' \n ')]
+            txt = tokenizer.texts_to_sequences(text)
+            txt = pad_sequences(txt, maxlen=X.shape[1], dtype='int32', value=0)
+            sentiment = model.predict(txt,batch_size=1)
+            print(sentiment)
+            print("Predicted with WG:  ", "thumbs-up" if np.argmax(sentiment[0]) >= 1 else "thumbs-down")
+            print("Ebert Actual:  ", "thumbs-up " if reviews[KEY].rr/3 >= 1 else "thumbs-down ", reviews[KEY].rr)
     
     # summarize history for accuracy
     plt.plot(history.history['acc'])
@@ -136,10 +159,6 @@ if __name__ == "__main__":
     shuffled_keys = pickle.load(f)
     f.close()
 
-    #test_example = "example2.txt"
-    #with io.open(test_example, encoding='utf-8') as f:
-    #    text = f.read().lower().replace('\n', ' \n ')
-    #vectorizing the review by the pre-fitted tokenizer instance
     for key in shuffled_keys[-10:-1]:
         text = [repr(reviews[key]).lower().replace('\n', ' \n ')]
         print(key)
@@ -149,4 +168,3 @@ if __name__ == "__main__":
         print(sentiment)
         print("Predicted:  ", "thumbs-up" if np.argmax(sentiment[0]) >= 1 else "thumbs-down")
         print("Actual:  ", "thumbs-up " if reviews[key].rr/3 >= 1 else "thumbs-down ", reviews[key].rr)
-    

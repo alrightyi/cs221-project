@@ -95,51 +95,49 @@ def reviewStats():
     f.close()
     
     keys = list(reviews.keys())
-    avg_chars = 0
-    avg_lines = 0
-    avg_chars_per_line = 0
-    avg_rating = 0
-    min_chars = float('inf')
-    max_chars = 0
-    min_lines = float('inf')
-    max_lines = 0
-    avg_rating = 0
+    valid_keys = 0
+    total_words = []
+    min_words = float('inf')
+    max_words = 0
+    thumbs_up = 0
+    thumbs_down = 0
     print("Total number of keys: ", len(keys))
     for key in keys:
+        if len(reviews[key].body) > 100:
+            continue
+            
+        valid_keys += 1
         body = reviews[key].body
-        lines = len(body)
-        avg_lines += lines
-        if lines > max_lines:
-            max_lines = lines 
-            max_key = key
-        if lines < min_lines:
-            min_lines = lines 
-            min_key = key
-        rating = reviews[key].rr
-        avg_rating += rating
-        for line in body:
-            chars = len(line)
-            avg_chars += chars
-            max_chars = chars if chars > max_chars else max_chars
-            min_chars = chars if lines < min_chars else min_chars
-    avg_lines /= len(keys)
-    avg_chars /= len(keys)
-    avg_chars_per_line = avg_chars / avg_lines
-    avg_rating /= len(keys)
+        txt = ''
+        for b in body:
+            if b == '\'Advertisement\'' or 'googletag.cmd.push' in b:
+                continue
+            b = b.lower()
+            b = re.sub('[^a-zA-z0-9\s]', '', b)
+            txt += b+' '
+        txt += '\n'
+        words = [w for w in txt.split(' ') if w.strip() != '' or w == '\n']
+        if len(words) > max_words:
+            max_words = len(words)
+        if len(words) < min_words:
+            min_words = len(words)
+        
+        for w in words:
+            total_words.append(w)
+            
+        if reviews[key].rr >= 3:
+            thumbs_up +=1
+        else:
+            thumbs_down +=1
     
-    print("Avg. line per review: ", avg_lines)
-    print("Max lines: ", max_lines)
-    print("Min lines: ", min_lines)
-    print("Avg. chars per review: ", avg_chars)
-    print("Max chars: ", max_chars)
-    print("Min chars: ", min_chars)
-    print("Avg. chars per line: ", avg_chars_per_line)
-    print("Avg. rating: ", avg_rating)
-    
-    print("Max lines review: ", reviews[max_key])
-    print("Min lines review: ", reviews[min_key])
-    print("Max lines rating: ", reviews[max_key].rr)
-    print("Min lines rating: ", reviews[min_key].rr)
+    print("Total reviews: ", valid_keys)
+    print("Corpus length: ", len(total_words))
+    print("Avg. words per review: ", len(total_words) / valid_keys)
+    print("Max words: ", max_words)
+    print("Min words: ", min_words)
+    print("Total unique words: ", len(set(total_words)))
+    print("Thumbs-ups: ", thumbs_up)
+    print("Thumbs-downs: ", thumbs_down)
             
 
 def getSummaries(argv):
@@ -218,5 +216,5 @@ def getSummaries(argv):
 
 if __name__ == '__main__':
     #getSummaries(sys.argv)
-    loadReviews()
-    #reviewStats()
+    #loadReviews()
+    reviewStats()

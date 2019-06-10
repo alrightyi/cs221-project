@@ -1,0 +1,39 @@
+1494/1494 [==============================] - 4s 3ms/step
+test score: 0.98 acc: 0.58
+/reviews/a-lovely-way-to-die-1968
+[[0.9347622  0.06523787]]
+Predicted:   thumbs-down
+Actual:   thumbs-down  2.0
+/reviews/the-train-robbers-1973
+[[0.00782996 0.99217004]]
+Predicted:   thumbs-up
+Actual:   thumbs-up  3.0
+/reviews/brother-can-you-spare-a-dime-1975
+[[0.6244281 0.3755719]]
+Predicted:   thumbs-down
+Actual:   thumbs-down  2.0
+/reviews/yes-giorgio-1982-1
+[[0.34398794 0.65601206]]
+Predicted:   thumbs-up
+Actual:   thumbs-down  1.5
+/reviews/ill-be-home-for-christmas-1998
+[[0.8492219  0.15077813]]
+Predicted:   thumbs-down
+Actual:   thumbs-down  1.0
+/reviews/georgia-1996
+[[0.01194325 0.9880568 ]]
+Predicted:   thumbs-up
+Actual:   thumbs-up  3.5
+/reviews/click-2006
+[[0.90968347 0.09031648]]
+Predicted:   thumbs-down
+Actual:   thumbs-down  2.0
+/reviews/keetje-tippel-1976
+[[0.9908407  0.00915935]]
+Predicted:   thumbs-down
+Actual:   thumbs-down  2.5
+/reviews/rush-1992
+[[0.03943354 0.9605665 ]]
+Predicted:   thumbs-up
+Actual:   thumbs-up  3.0
+

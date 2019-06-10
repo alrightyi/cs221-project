@@ -32,17 +32,17 @@ import random
 
 MIN_WORD_FREQUENCY = 5
 SEQUENCE_LEN = 140
-STEP = 10
+STEP = 4
 DROPOUT = 0.5
 BATCH_SIZE = 32
 SPLIT=0.2
-EPOCHS = 20
+EPOCHS = 50
 #CORPUS = "ebert_last5_2000.txt"
 CORPUS = "roger_ebert_last5.txt"
 RESULT = "result_5_epoch10.txt"
 VOCABULARY = "vocab.txt"
 MODEL = None
-#MODEL = "checkpoints/LSTM-epoch001-words18707-sequence100-minfreq5-loss7.6702-acc0.0484-val_loss7.3704-val_acc0.0471"
+#MODEL = "checkpoints/LSTM-epoch010-words18707-sequence140-minfreq5-loss5.6837-acc0.0531-val_loss8.5211-val_acc0.0547"
 
 
 
@@ -131,7 +131,7 @@ def on_epoch_end(epoch, logs):
     #print(seed)
     text_in_words = [w for w in seed.split(' ') if w.strip() != '' or w == '\n']
     #print(text_in_words)
-    print("seed length: ", len(text_in_words))
+    #print("seed length: ", len(text_in_words))
 
     #for diversity in [0.3, 0.4, 0.5, 0.6, 0.7]:
     for diversity in [0.5, 1.0]:
@@ -248,6 +248,13 @@ if __name__ == "__main__":
     else:
         model = load_model(MODEL)
         model.summary()
+        
+        history = model.fit_generator(generator(sentences, next_words, BATCH_SIZE),
+                                      steps_per_epoch=int(len(sentences)/BATCH_SIZE) + 1,
+                                      epochs=EPOCHS,
+                                      callbacks=callbacks_list,
+                                      validation_data=generator(sentences_test, next_words_test, BATCH_SIZE),
+                                      validation_steps=int(len(sentences_test)/BATCH_SIZE) + 1)
         
     on_epoch_end(10, None)
     
