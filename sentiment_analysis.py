@@ -29,13 +29,14 @@ import os
 import io
 import pandas as pd
 
-EMBED_DIM = 64
-MAX_FEATURES = 2000
-LSTM_OUT = 96
-DROPOUT = 0.5
+EMBED_DIM = 32
+MAX_FEATURES = 1000
+LSTM_OUT = 48
+DROPOUT = 0.6
 BATCH_SIZE = 32
 EPOCHS = 50
 SPLIT = 0.2
+PATIENCE = 20
 CORPUS = "ebert_last5_2000.txt"
 RESULT = "result.txt"
 VOCABULARY = "vocab.txt"
@@ -87,7 +88,7 @@ if __name__ == "__main__":
 
     checkpoint = ModelCheckpoint(file_path, monitor='val_acc', save_best_only=True, period=10)
     #print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
-    early_stopping = EarlyStopping(monitor='val_acc', patience=20)
+    early_stopping = EarlyStopping(monitor='val_acc', patience=PATIENCE)
     callbacks_list = [checkpoint, early_stopping]
     
     if MODEL == None:

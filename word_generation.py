@@ -31,9 +31,9 @@ import pickle
 import random
 
 MIN_WORD_FREQUENCY = 5
-SEQUENCE_LEN = 140
+SEQUENCE_LEN = 100
 STEP = 4
-DROPOUT = 0.5
+DROPOUT = 0.6
 BATCH_SIZE = 32
 SPLIT=0.2
 EPOCHS = 50
@@ -231,7 +231,7 @@ if __name__ == "__main__":
 
     checkpoint = ModelCheckpoint(file_path, monitor='val_acc', save_best_only=True, period=10)
     print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
-    early_stopping = EarlyStopping(monitor='val_acc', patience=10)
+    early_stopping = EarlyStopping(monitor='val_acc', patience=20)
     callbacks_list = [checkpoint, print_callback, early_stopping]
 
     if MODEL == None:
